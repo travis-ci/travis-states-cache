@@ -1,53 +1,63 @@
-require 'json'
 require 'logger'
-require 'travis/states/cache/memcached'
+require 'travis/states/cache/adapter/memcached'
+require 'travis/states/cache/adapter/memory'
+require 'travis/states/cache/enabled'
+require 'travis/states/cache/record'
+require 'travis/states/cache/serialize'
 
 module Travis
-  class << self
-    attr_accessor :states_cache
-  end
-
   module States
     class Cache
+      MSGS = {
+        fresh: 'Cache is fresh: repo_id=%{repo_id} branch=%{branch}, given build_id=%{build_id}, cached build_id=%{cached_build_id}, skipping',
+        stale: 'Cache is stale: repo_id=%{repo_id} branch=%{branch}, given build_id=%{build_id}, cached build_id=%{cached_build_id}, writing state=%{state}',
+        miss:  'Cache is missing: repo_id=%{repo_id} branch=%{branch}, given build_id=%{build_id}, writing state=%{state}',
+        flush: 'Flushing states cache'
+      }
+
+      prepend Enabled
+
       Error = Class.new(StandardError)
 
-      class << self
-        attr_reader :features
+      attr_reader :adapter, :logger
 
-        def setup(config, logger = nil, features = nil)
-          name  = config.delete(:adapter) || :memcached
-          const = const_get(name.to_s.sub(/./, &:upcase))
-          Travis.states_cache = new(const.new(config.to_h, logger))
-          @features = features
-        end
+      def initialize(config, options = {})
+        @logger  = options[:logger] || Logger.new(STDOUT)
+        @adapter = adapter_for(config.to_h)
       end
 
-      attr_reader :adapter
-
-      def initialize(adapter)
-        @adapter = adapter
+      def read(args, &block)
+        record = Record.new(adapter, args)
+        return record.state if record.fresh?
+        record.write(block.call(args)) if block
+        record.state
       end
 
-      def read_state(repo_id, options = {})
-        adapter.read_state(repo_id, options) if enabled?
+      def write(state, args)
+        record = Record.new(adapter, args)
+        info write_msg(record.status, state, record.to_h)
+        record.write(state) && record.state unless record.fresh?
       end
 
-      def read(repo_id, options = {})
-        adapter.read(repo_id, options) if enabled?
-      end
-
-      def write(repo_id, state, options = {})
-        adapter.write(repo_id, state, options) if enabled?
-      end
-
-      def enabled?
-        features.nil? ? true : features.feature_active?(:states_cache)
+      def flush
+        info MSGS[:flush]
+        adapter.flush
       end
 
       private
 
-        def features
-          self.class.features
+        def write_msg(msg, state, args)
+          MSGS[msg] % args.merge(state: state)
+        end
+
+        def info(msg)
+          logger.info "[states-cache] #{msg}"
+        end
+
+        def adapter_for(config)
+          name  = config.delete(:adapter) || :memcached
+          const = Adapter.const_get(name.to_s.sub(/./, &:upcase))
+          const.new(config.to_h, logger)
         end
     end
   end

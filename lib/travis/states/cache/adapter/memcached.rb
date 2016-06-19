@@ -4,17 +4,17 @@ require 'dalli'
 module Travis
   module States
     class Cache
-      class Memcached
-        class Client < Struct.new(:config)
+      module Adapter
+        class Memcached
           TTL     = 7 * 24 * 60 * 60 # 7 days # TODO not used?
           POOL    = { size: 10, timeout: 3 }
           RETRIES = 3
           JITTER  = 0.5
 
-          attr_reader :pool
+          attr_reader :config
 
-          def initialize(*)
-            super
+          def initialize(config)
+            @config = config
             @pool = ConnectionPool.new(POOL) { config[:connection] || connection }
           end
 
@@ -24,6 +24,10 @@ module Travis
 
           def set(key, value)
             with_memcached { |client| client.set(key, value) }
+          end
+
+          def flush
+            with_memcached { |client| client.flush }
           end
 
           private
@@ -43,6 +47,7 @@ module Travis
               raise Error, "Couldn't connect to a memcached server: #{e.message}"
             end
 
+            # TODO extract
             def meter(key)
               Metrics.meter(key) if defined?(Metrics)
             end
