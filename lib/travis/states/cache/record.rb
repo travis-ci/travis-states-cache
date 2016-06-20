@@ -3,18 +3,16 @@ require 'travis/states/cache/serialize'
 module Travis
   module States
     class Cache
-      class Record < Struct.new(:store, :args)
+      class Record < Struct.new(:store, :args, :options)
         include Serialize
 
-        FORMAT = :json
-
         def read
-          @data ||= deserialize(store.get(key))
+          @data ||= deserialize(store.get(key), options)
         end
 
         def write(state)
           @data = args.merge(state: state)
-          store.set(key, serialize(read))
+          store.set(key, serialize(read, options))
           read
         end
 

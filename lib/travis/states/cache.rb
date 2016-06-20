@@ -19,22 +19,23 @@ module Travis
 
       Error = Class.new(StandardError)
 
-      attr_reader :adapter, :logger
+      attr_reader :adapter, :logger, :config
 
       def initialize(config, options = {})
+        @config  = config
         @logger  = options[:logger] || Logger.new(STDOUT)
         @adapter = adapter_for(config.to_h)
       end
 
       def read(args, &block)
-        record = Record.new(adapter, args)
+        record = record_for(args)
         return record.state if record.fresh?
         record.write(block.call(args)) if block
         record.state
       end
 
       def write(state, args)
-        record = Record.new(adapter, args)
+        record = record_for(args)
         info write_msg(record.status, state, record.to_h)
         record.write(state) && record.state unless record.fresh?
       end
@@ -45,6 +46,10 @@ module Travis
       end
 
       private
+
+        def record_for(args)
+          Record.new(adapter, args, format: config[:format])
+        end
 
         def write_msg(msg, state, args)
           MSGS[msg] % args.merge(state: state)

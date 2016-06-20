@@ -39,6 +39,8 @@ module Travis
             end
         end
 
+        DEFAULT_FORMAT = :json
+
         def serialize(data, options = {})
           serializer(options).serialize(data)
         end
@@ -48,7 +50,7 @@ module Travis
         end
 
         def serializer(options)
-          format = options[:format] || :string
+          format = options[:format] || DEFAULT_FORMAT
           Serialize.const_get(format.to_s.sub(/./, &:upcase)).new
         end
 

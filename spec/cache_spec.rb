@@ -1,5 +1,6 @@
 describe Travis::States::Cache do
-  let(:cache) { described_class.new({ adapter: :memory }, logger: logger) }
+  let(:config) { { adapter: :memory, format: :string } }
+  let(:cache)  { described_class.new(config, logger: logger) }
 
   xit 'handles connection errors gracefully' do
     data = { id: 10, state: 'passed' }

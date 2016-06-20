@@ -1,8 +1,9 @@
 describe Travis::States::Cache::Record do
+  let(:opts)   { { format: :string } }
   let(:client) { Travis::States::Cache::Adapter::Memory.new }
 
   describe 'read' do
-    subject { described_class.new(client, args).read }
+    subject { described_class.new(client, args, opts).read }
 
     context 'branch given' do
       let(:args) { { repo_id: 1, branch: 'main' } }
@@ -22,7 +23,7 @@ describe Travis::States::Cache::Record do
   end
 
   describe 'write' do
-    subject { described_class.new(client, args).write('success') }
+    subject { described_class.new(client, args, opts).write('success') }
 
     context 'branch given' do
       let(:args) { { repo_id: 1, branch: 'main', build_id: 1 } }
@@ -42,7 +43,8 @@ describe Travis::States::Cache::Record do
   end
 
   describe 'status' do
-    subject { described_class.new(client, repo_id: 1, build_id: 2).status }
+    let(:args) { { repo_id: 1, build_id: 2 } }
+    subject { described_class.new(client, args, opts).status }
 
     context 'when fresh' do
       before { client.set('state:1', '1::2:success') }
@@ -60,7 +62,8 @@ describe Travis::States::Cache::Record do
   end
 
   describe 'fresh?' do
-    subject { described_class.new(client, repo_id: 1, build_id: 2).fresh? }
+    let(:args) { { repo_id: 1, build_id: 2 } }
+    subject { described_class.new(client, args, opts).fresh? }
 
     context 'when the cached build_id is newer than the given build_id' do
       before { client.set('state:1', '1::2:success') }
