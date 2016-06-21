@@ -38,6 +38,14 @@ module Travis
 
         private
 
+          def serialize(data, options)
+            super({ build_id: data[:build_id], state: data[:state] }, options)
+          end
+
+          def deserialize(string, options)
+            super.merge(repo_id: repo_id, branch: branch)
+          end
+
           [:repo_id, :branch, :build_id].each do |name|
             define_method(name) { args[name] }
           end

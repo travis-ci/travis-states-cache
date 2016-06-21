@@ -1,11 +1,12 @@
 require 'json'
+require 'travis/states/cache/serialize/compat'
 
 module Travis
   module States
     class Cache
       module Serialize
         class String
-          KEYS = [:repo_id, :branch, :build_id, :state]
+          KEYS = [:build_id, :state]
 
           def serialize(data)
             data.values_at(*KEYS).join(':')
@@ -25,7 +26,7 @@ module Travis
 
         class Json
           def serialize(data)
-            JSON.dump(data)
+            JSON.dump(build_id: data[:build_id], state: data[:state])
           end
 
           def deserialize(string)
@@ -39,7 +40,9 @@ module Travis
             end
         end
 
-        DEFAULT_FORMAT = :json
+        prepend Compat
+
+        DEFAULT_FORMAT = :string
 
         def serialize(data, options = {})
           serializer(options).serialize(data)

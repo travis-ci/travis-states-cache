@@ -2,15 +2,15 @@ describe Travis::States::Cache do
   let(:config) { { adapter: :memory, format: :string } }
   let(:cache)  { described_class.new(config, logger: logger) }
 
-  xit 'handles connection errors gracefully' do
-    data = { id: 10, state: 'passed' }
-    client = Dalli::Client.new('illegalserver:11211')
-    adapter = StatesCache::MemcachedAdapter.new(client: client)
-    adapter.jitter = 0.005
-    subject = StatesCache.new(adapter: adapter)
-    expect { subject.write(1, 'master', data) }.to raise_error(Travis::StatesCache::CacheError)
-    expect { subject.fetch(1) }.to raise_error(Travis::StatesCache::CacheError)
-  end
+  # xit 'handles connection errors gracefully' do
+  #   data = { id: 10, state: 'passed' }
+  #   client = Dalli::Client.new('illegalserver:11211')
+  #   adapter = StatesCache::MemcachedAdapter.new(client: client)
+  #   adapter.jitter = 0.005
+  #   subject = StatesCache.new(adapter: adapter)
+  #   expect { subject.write(1, 'master', data) }.to raise_error(Travis::StatesCache::CacheError)
+  #   expect { subject.fetch(1) }.to raise_error(Travis::StatesCache::CacheError)
+  # end
 
   describe 'read' do
     describe 'with an empty cache' do
@@ -34,7 +34,7 @@ describe Travis::States::Cache do
     describe 'with a fresh cache' do
       describe 'given a branch' do
         let(:key)   { 'state:1:main' }
-        let(:value) { '1:main:2:success' }
+        let(:value) { '2:success' }
 
         before  { cache.adapter.set(key, value) }
         subject { cache.read(repo_id: 1, branch: 'main') }
@@ -45,7 +45,7 @@ describe Travis::States::Cache do
 
       describe 'given no branch' do
         let(:key)   { 'state:1' }
-        let(:value) { '1::2:success' }
+        let(:value) { '2:success' }
 
         before  { cache.adapter.set(key, value) }
         subject { cache.read(repo_id: 1) }
@@ -60,7 +60,7 @@ describe Travis::States::Cache do
     describe 'with an empty cache' do
       describe 'given a branch' do
         let(:key)   { 'state:1:main' }
-        let(:value) { '1:main:2:success' }
+        let(:value) { '2:success' }
         subject { cache.write(:success, repo_id: 1, branch: 'main', build_id: 2) }
 
         it { expect { subject }.to call(cache.adapter, :set).with(key, value) }
@@ -71,7 +71,7 @@ describe Travis::States::Cache do
 
       describe 'given no branch' do
         let(:key)   { 'state:1' }
-        let(:value) { '1::2:success' }
+        let(:value) { '2:success' }
         subject { cache.write(:success, repo_id: 1, build_id: 2) }
 
         it { expect { subject }.to call(cache.adapter, :set).with(key, value) }
@@ -84,9 +84,9 @@ describe Travis::States::Cache do
     describe 'with a stale cache' do
       describe 'given a branch' do
         let(:key)   { 'state:1:main' }
-        let(:value) { '1:main:2:success' }
+        let(:value) { '2:success' }
 
-        before  { cache.adapter.set(key, '1:main:1:success') }
+        before  { cache.adapter.set(key, '1:success') }
         subject { cache.write(:success, repo_id: 1, branch: 'main', build_id: 2) }
 
         it { expect { subject }.to call(cache.adapter, :set).with(key, value) }
@@ -97,9 +97,9 @@ describe Travis::States::Cache do
 
       describe 'given no branch' do
         let(:key)   { 'state:1' }
-        let(:value) { '1::2:success' }
+        let(:value) { '2:success' }
 
-        before  { cache.adapter.set(key, '1::1:success') }
+        before  { cache.adapter.set(key, '1:success') }
         subject { cache.write(:success, repo_id: 1, build_id: 2) }
 
         it { expect { subject }.to call(cache.adapter, :set).with(key, value) }
@@ -114,9 +114,9 @@ describe Travis::States::Cache do
 
       describe 'given a branch' do
         let(:key)   { 'state:1:main' }
-        let(:value) { '1:main:2:success' }
+        let(:value) { '2:success' }
 
-        before  { cache.adapter.set(key, '1:main:2:success') }
+        before  { cache.adapter.set(key, '2:success') }
         subject { cache.write(:success, repo_id: 1, branch: 'main', build_id: 2) }
 
         it { expect { subject }.to call(cache.adapter, :set).never }
@@ -126,9 +126,9 @@ describe Travis::States::Cache do
 
       describe 'given no branch' do
         let(:key)   { 'state:1' }
-        let(:value) { '1::2:success' }
+        let(:value) { '2:success' }
 
-        before  { cache.adapter.set(key, '1::2:success') }
+        before  { cache.adapter.set(key, '2:success') }
         subject { cache.write(:success, repo_id: 1, build_id: 2) }
 
         it { expect { subject }.to call(cache.adapter, :set).never }
