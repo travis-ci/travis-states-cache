@@ -7,18 +7,14 @@ describe Travis::States::Cache::Record do
 
     context 'branch given' do
       let(:args) { { repo_id: 1, branch: 'main' } }
-      let(:data) { { repo_id: 1, build_id: 1, branch: 'main', state: 'success' } }
       before     { client.stubs(:get).with('state:1:main').returns('1:success') }
-
-      it { should eq data }
+      it { should eq(repo_id: 1, build_id: 1, branch: 'main', state: 'success') }
     end
 
     context 'no branch given' do
       let(:args) { { repo_id: 1 } }
-      let(:data) { { repo_id: 1, build_id: 1, branch: nil, state: 'success' } }
       before     { client.stubs(:get).with('state:1').returns('1:success') }
-
-      it { should eq(data) }
+      it { should eq(repo_id: 1, build_id: 1, branch: nil, state: 'success') }
     end
   end
 
@@ -27,18 +23,14 @@ describe Travis::States::Cache::Record do
 
     context 'branch given' do
       let(:args) { { repo_id: 1, branch: 'main', build_id: 1 } }
-      let(:data) { { repo_id: 1, build_id: 1, branch: 'main', state: 'success' } }
-
       it { expect { subject }.to change { client.get('state:1:main') }.to('1:success') }
-      it { expect(subject).to eq(data) }
+      it { expect(subject).to eq(repo_id: 1, build_id: 1, branch: 'main', state: 'success') }
     end
 
     context 'no branch given' do
       let(:args) { { repo_id: 1, build_id: 1 } }
-      let(:data) { { repo_id: 1, build_id: 1, state: 'success' } }
-
       it { expect { subject }.to change { client.get('state:1') }.to('1:success') }
-      it { expect(subject).to eq(data) }
+      it { expect(subject).to eq(repo_id: 1, build_id: 1, state: 'success') }
     end
   end
 
