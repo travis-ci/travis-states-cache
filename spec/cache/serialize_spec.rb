@@ -1,7 +1,7 @@
 describe Travis::States::Cache::Serialize do
   let(:data)        { { build_id: 1, state: 'success' } }
   let(:serialize)   { described_class.serialize(data, format: format) }
-  let(:deserialize) { described_class.deserialize(string, format: format) }
+  let(:deserialize) { described_class.deserialize(string) }
 
   describe 'json' do
     let(:format) { :json }

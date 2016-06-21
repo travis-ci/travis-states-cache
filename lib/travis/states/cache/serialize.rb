@@ -48,14 +48,20 @@ module Travis
           serializer(options).serialize(data)
         end
 
-        def deserialize(string, options = {})
-          serializer(options).deserialize(string)
+        def deserialize(string)
+          serializer(format: format_for(string)).deserialize(string)
         end
 
         def serializer(options)
           format = options[:format] || DEFAULT_FORMAT
           Serialize.const_get(format.to_s.sub(/./, &:upcase)).new
         end
+
+        private
+
+          def format_for(string)
+            string && string.start_with?('{') ? Json : String
+          end
 
         extend self
       end

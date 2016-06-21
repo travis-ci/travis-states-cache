@@ -7,12 +7,12 @@ module Travis
         include Serialize
 
         def read
-          @data ||= deserialize(store.get(key), options)
+          @data ||= deserialize(store.get(key))
         end
 
         def write(state)
           @data = args.merge(state: state)
-          store.set(key, serialize(read, options))
+          store.set(key, serialize(read))
           read
         end
 
@@ -38,11 +38,11 @@ module Travis
 
         private
 
-          def serialize(data, options)
+          def serialize(data)
             super({ build_id: data[:build_id], state: data[:state] }, options)
           end
 
-          def deserialize(string, options)
+          def deserialize(string)
             super.merge(repo_id: repo_id, branch: branch)
           end
 
