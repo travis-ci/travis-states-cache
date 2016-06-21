@@ -19,12 +19,12 @@ module Travis
 
       Error = Class.new(StandardError)
 
-      attr_reader :adapter, :logger, :config
+      attr_reader :adapter, :logger, :config, :options
 
       def initialize(config, options = {})
-        @config  = config
+        @config  = config.to_h
         @logger  = options[:logger] || Logger.new(STDOUT)
-        @adapter = adapter_for(config.to_h)
+        @adapter = adapter_for(@config, options)
       end
 
       def read(args, &block)
@@ -59,10 +59,10 @@ module Travis
           logger.info "[states-cache] #{msg}"
         end
 
-        def adapter_for(config)
+        def adapter_for(config, options)
           name  = config.delete(:adapter) || :memcached
           const = Adapter.const_get(name.to_s.sub(/./, &:upcase))
-          const.new(config.to_h, logger)
+          const.new(config.to_h, options)
         end
     end
   end

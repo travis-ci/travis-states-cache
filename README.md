@@ -53,3 +53,8 @@ New format (json):
 => ""
 ```
 
+#### Migration strategy
+
+* [`Serialize#deserialize`](https://github.com/travis-ci/travis-states-cache/blob/master/lib/travis/states/cache/serialize.rb#L52) auto-detects the format at read time.
+* [`Serialize::Compat`](https://github.com/travis-ci/travis-states-cache/blob/master/lib/travis/states/cache/serialize/compat.rb) normalizes the key `id` to `build_id` in  at read time.
+* [`Adapter::Compat`](https://github.com/travis-ci/travis-states-cache/blob/master/lib/travis/states/cache/adapter/compat.rb#L8) tries the old key format unless a value has been found for the new key format. If there's a value stored for the old format it will write it to the respective key with the new format.

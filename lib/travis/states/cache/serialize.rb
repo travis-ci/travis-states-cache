@@ -40,6 +40,7 @@ module Travis
             end
         end
 
+        extend self
         prepend Compat
 
         DEFAULT_FORMAT = :string
@@ -52,18 +53,16 @@ module Travis
           serializer(format: format_for(string)).deserialize(string)
         end
 
-        def serializer(options)
-          format = options[:format] || DEFAULT_FORMAT
-          Serialize.const_get(format.to_s.sub(/./, &:upcase)).new
-        end
-
         private
+
+          def serializer(options)
+            format = options[:format] || DEFAULT_FORMAT
+            Serialize.const_get(format.to_s.sub(/./, &:upcase)).new
+          end
 
           def format_for(string)
             string && string.start_with?('{') ? Json : String
           end
-
-        extend self
       end
     end
   end

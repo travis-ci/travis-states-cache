@@ -1,5 +1,6 @@
 require 'connection_pool'
 require 'dalli'
+require 'travis/states/cache/adapter/compat'
 
 module Travis
   module States
@@ -11,11 +12,15 @@ module Travis
           RETRIES = 3
           JITTER  = 0.5
 
-          attr_reader :config
+          prepend Compat
 
-          def initialize(config)
+          attr_reader :config, :pool, :client
+
+          def initialize(config = {}, options = {})
             @config = config
-            @pool = ConnectionPool.new(POOL) { config[:connection] || connection }
+            # TODO normalize these configs
+            @client = Dalli::Client.new(config[:memcached_servers], (config[:memcached_options] || {}).to_h)
+            @pool = ConnectionPool.new(POOL) { client }
           end
 
           def get(key)
@@ -32,30 +37,21 @@ module Travis
 
           private
 
-            def connection
-              servers = config[:memcached_servers]
-              options = config[:memcached_options] || {}
-              Dalli::Client.new(servers, options.to_h)
-            end
-
             def with_memcached
-              retrying(Dalli::RingError) do
-                pool.with { |client| yield client }
-              end
+              retrying { pool.with { |client| yield client } }
             rescue Dalli::RingError => e
               meter('memcached.connect-errors')
-              raise Error, "Couldn't connect to a memcached server: #{e.message}"
+              raise Error, "Could not connect to a memcached server: #{e.message}"
             end
 
-            # TODO extract
             def meter(key)
-              Metrics.meter(key) if defined?(Metrics)
+              options[:metrics].meter(key) if options[:metrics]
             end
 
             def retrying(*exceptions)
               retries = 0
               yield
-            rescue *exceptions
+            rescue Dalli::RingError
               raise if retries += 1 > RETRIES
               sleep interval(retries)
               retry
