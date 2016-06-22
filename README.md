@@ -1,4 +1,4 @@
-# Travis States Cache
+# Travis States Cache [![Build Status](https://travis-ci.org/travis-ci/travis-states-cache.svg?branch=master)](https://travis-ci.org/travis-ci/travis-states-cache)
 
 Old usage (with travis-core):
 
