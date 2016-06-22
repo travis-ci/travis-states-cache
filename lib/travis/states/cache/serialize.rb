@@ -40,7 +40,6 @@ module Travis
             end
         end
 
-        extend self
         prepend Compat
 
         DEFAULT_FORMAT = :string
@@ -52,6 +51,8 @@ module Travis
         def deserialize(string)
           serializer(format: format_for(string)).deserialize(string)
         end
+
+        extend self
 
         private
 
