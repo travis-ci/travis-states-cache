@@ -39,8 +39,8 @@ New format (string, default):
 ```
 >> c.get('state:2717')
 => "2717::139291162,failed"
->> c.get('state:2717-ha-test-pr-676')
-=> "{\"id\":139282218,\"state\":\"passed\"}"
+>> c.get('state:2717:ha-test-pr-676')
+=> "2717:ha-test-pr-676:139291162,failed"
 ```
 
 New format (json):
@@ -48,8 +48,8 @@ New format (json):
 ```
 >> c.get('state:2717')
 => "2717::139291162,failed"
->> c.get('state:2717-ha-test-pr-676')
-=> "{"build_id":139291162,"state":"success"}"
+>> c.get('state:2717:ha-test-pr-676')
+=> "{\"build_id\":139291162,\"state\":\"success\"}"
 => ""
 ```
 
